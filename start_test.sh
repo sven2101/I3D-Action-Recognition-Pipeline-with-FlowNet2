@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python test.py ucf101 mixed FlowNet2-css-ft-sd 1
