@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python live_inference_example.py ucf101 mixed FlowNet2-css-ft-sd 3 50
