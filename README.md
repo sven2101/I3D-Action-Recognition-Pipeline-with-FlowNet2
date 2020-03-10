@@ -222,10 +222,14 @@ Some explanations of the readme come from the original [FlowNet2 Repository](htt
 
 ## 9. TODOs
 
-- [x] real live script
+- [x] add real live inference script
 - [ ] add images of different flownet2 modes (qualitative comparison)
-- [ ] improve thread waiting solution for videofile inference when threads are done
+- [ ] add class for common code of live and videofile processing
+- [ ] add live prediction to preview window 
+- [ ] improve console output for predictions
+- [x] improve thread waiting solution for videofile inference when threads are done
 - [ ] setting file for paths, training parameter and so on (improve usability)
 - [ ] add inference mode rgb and flow mode (currently only mixed mode is available)
+- [ ] improve training process with validation set and kfold validation
 - [ ] python3 compatibility
 

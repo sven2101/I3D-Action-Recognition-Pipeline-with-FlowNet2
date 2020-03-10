@@ -11,7 +11,7 @@ import cv2
 #use if flownet saves not as .npy
 #import flowiz as fz
 import glob
-import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, wait
 import numpy as np
 import tensorflow as tf
 import i3d
@@ -91,7 +91,7 @@ def main(dataset, mode, variant, workers, inference):
     sess.close()
 
 def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference_frames, workers):
-    pooling_executor = concurrent.futures.ThreadPoolExecutor(max_workers=workers)
+    pooling_executor = ThreadPoolExecutor(max_workers=workers)
     cv2.namedWindow("Live")
     vidcap = cv2.VideoCapture(0)
     success,frame = vidcap.read()
@@ -102,10 +102,8 @@ def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, 
     while success: 
         if frame is not None:   
             cv2.imshow("Live", frame)
-        
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-            
+            break   
         img_path = DATA_DIR+"/img/frame{:06d}.jpg".format(count)
         cv2.imwrite(img_path,frame)
         img_frames.append(transform_data(frame))

@@ -11,7 +11,7 @@ import cv2
 #use if flownet saves not as .npy
 #import flowiz as fz
 import glob
-import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, wait
 import numpy as np
 import tensorflow as tf
 import i3d
@@ -22,8 +22,6 @@ _GPU_FRACTION = 0.5
 _MIX_WEIGHT_OF_RGB = 0.5
 _MIX_WEIGHT_OF_FLOW = 0.5
 _LOG_ROOT = 'output'
-
-global_parts_done=[]
 
 video_path = './data/example/_ApplyEyeMakeup_g01_c01.avi'
 DATA_DIR = 'data/live'
@@ -90,14 +88,12 @@ def main(dataset, mode, variant, workers, inference):
 
     read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference, workers)
 
-    while True:
-        if len(global_parts_done) == 5:
-            break
-    print('Infer 500 Frames in: '+str(time.time() - start_time), end="\r\n")
+    print('Infer Videofile in: '+str(time.time() - start_time), end="\r\n")
     sess.close()
 
 def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference_frames, workers):
-    pooling_executor = concurrent.futures.ThreadPoolExecutor(max_workers=workers)
+    pooling_executor = ThreadPoolExecutor(max_workers=workers)
+    future_threads = []
     vidcap = cv2.VideoCapture(video_path)
     success,frame = vidcap.read()
     flow_paths = []
@@ -105,7 +101,6 @@ def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, 
     img_frames = []
     count = 0
     while success: 
-        time.sleep(0.08)
         img_path = DATA_DIR+"/img/frame{:06d}.jpg".format(count)
         cv2.imwrite(img_path,frame)
         img_frames.append(transform_data(frame))
@@ -115,25 +110,27 @@ def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, 
         flow_paths.append(flow_path)
         if count != 0 and count%inference_frames == 0:
             print('Calculate Flows for Part '+str(int(imagelist_number))+'...', end="\r\n")
-            pooling_executor.submit(generate_flow_and_predict,variant,DATA_DIR,flow_paths,img_paths,img_frames,str(imagelist_number), fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess)
+            future_threads.append(pooling_executor.submit(generate_flow_and_predict,variant,DATA_DIR,flow_paths,img_paths,img_frames,str(imagelist_number), fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess))
             print('Added data of Part '+str(int(imagelist_number))+' in pipeline...', end="\r\n")
             img_frames = []
             img_paths = []
             flow_paths = []
             img_paths.append(img_path)
             flow_paths.append(flow_path)
-        success,frame = vidcap.read() 
+        # use two times to reduce fps
+        #success,frame = vidcap.read() 
         success,frame = vidcap.read() 
         count = count + 1
     vidcap.release()
+    print('Waiting until all threads finished...', end="\r\n")
+    wait(future_threads)
+    print('All threads finished!', end="\r\n")
     
 def generate_flow_and_predict(variant,DATA_DIR,flow_paths,img_paths,img_frames,imagelist_number,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
-    global global_parts_done
     write_flownet_io_files(DATA_DIR,flow_paths,img_paths,imagelist_number)
     flow_frames = generate_flows(DATA_DIR,variant,imagelist_number)
     predict_action(img_frames, flow_frames,imagelist_number, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess)
     clean_directory(DATA_DIR,imagelist_number,img_paths)
-    global_parts_done.append(imagelist_number)
     
 def predict_action(img_frames, flow_frames, imagelist_number, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
     rgb_clip = np.array(img_frames)  
