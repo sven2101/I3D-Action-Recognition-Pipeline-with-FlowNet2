@@ -133,9 +133,18 @@ It will save the logs to /output. You can modify the live inference process in `
 
 See start_live_inference.sh as example.
 
+You can quit the live stream and stop the script by pressing the key 'q' in the live-preview window. 
+
 **Note: Global Variable _GPU_FRACTION in `live_inference.py`: amount of GPU fraction (Don't use 1 because FlowNet2 and I3D run in parallel)**
 
 **Note: Make sure it's using GPU and not CPU. If it's very slow it's probably on CPU and you should fix your cuda environment. Look at Section 6.**
+
+## 5.1 Videofile Inference instead of live stream
+`videofile_inference.py` contains an example for processing a videofile (.avi, .mp4, ...) instead of a live stream. It's similar to `live_inference.py`.
+
+> $ sh start_videofile_inference.sh
+
+It uses the example videofile /data/example/_ApplyEyeMakeup_g01_c01.avi.
 
 ## 6. Troubleshooting
 
@@ -210,4 +219,13 @@ upcoming
 The files in this repository are under the [GNU General Public License v3.0](LICENSE)
 
 Some explanations of the readme come from the original [FlowNet2 Repository](https://github.com/lmb-freiburg/flownet2-docker) and [I3D Finetune Repository](https://github.com/USTC-Video-Understanding/I3D_Finetune).
+
+## 9. TODOs
+
+- [x] real live script
+- [ ] add images of different flownet2 modes (qualitative comparison)
+- [ ] improve thread waiting solution for videofile inference when threads are done
+- [ ] setting file for paths, training parameter and so on (improve usability)
+- [ ] add inference mode rgb and flow mode (currently only mixed mode is available)
+- [ ] python3 compatibility
 
