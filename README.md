@@ -209,9 +209,8 @@ FlowNet-CSS      |     500     |    78.52s  | 0.16s | 8 | 1.4GB
 FlowNet (Max)      |     500     |    159.57s  | 0.32s | 3 | 2.4GB
 TVL-1 (CPU)      |     500     |    647.27s  | 1.3s | 0.8 | -
 
-Quality of different FlowNet2 modes and TVL-1:
+Quality of different FlowNet2 modes and TVL-1 using the example of washing hand:
 
-upcoming
 ![quality_flownet2](data/quality.png)
 
 
@@ -223,7 +222,7 @@ Some explanations of the readme come from the original [FlowNet2 Repository](htt
 ## 9. TODOs
 
 - [x] add real live inference script
-- [ ] add images of different flownet2 modes (qualitative comparison)
+- [x] add images of different flownet2 modes (qualitative comparison)
 - [ ] add class for common code of live and videofile processing
 - [ ] add live prediction to preview window 
 - [ ] improve console output for predictions
