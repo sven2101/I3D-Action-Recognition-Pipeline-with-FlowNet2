@@ -1,3 +1,4 @@
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 # I3D Finetune with FlowNet 2.0 Docker Image
 
 This repository contains a Dockerfile to run neural networks for optical flow estimation in Docker containers and the I3D Finetune architecture for action recognition. It contains scripts for training, testing and live inference. 
@@ -23,7 +24,6 @@ you can install the requirements with
 > $ pip install -r requirements.txt
 
 ## 1. Building the FN2 Docker image
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 
 Simply run `make`. This will create two Docker images: The OS base (an Ubuntu 16.04 base extended by Nvidia, with CUDA 8.0), and the "flownet2" image on top. In total, about 8.5GB of space will be needed after building. Build times are a little slow. Maybe you have to run `sudo make`.
