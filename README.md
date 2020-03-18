@@ -1,9 +1,10 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 # I3D Finetune with FlowNet 2.0 Docker Image
 
-This repository contains a Dockerfile to run neural networks for optical flow estimation in Docker containers and the I3D Finetune architecture for action recognition. It contains scripts for training, testing and live inference. 
+This repository contains a Dockerfile to run neural networks for optical flow estimation in Docker containers and the I3D Finetune architecture for action recognition. It contains scripts for **training**, **testing** and **live inference**. 
 
-###Example of video inference:
+### Run a video or live stream from your camera or file system to get the current action class
+
 <img src="data/archery.gif" width="33%"></img> <img src="data/boxing.gif" width="33%"></img> <img src="data/juggling.gif" width="33%"></img> 
 
 ## 0. Requirements
@@ -228,7 +229,7 @@ Some explanations of the readme come from the original [FlowNet2 Repository](htt
 - [x] add images of different flownet2 modes (qualitative comparison)
 - [ ] add class for common code of live and videofile processing
 - [ ] add live prediction to preview window 
-- [ ] improve console output for predictions
+- [x] improve console output for predictions
 - [x] improve thread waiting solution for videofile inference when threads are done
 - [ ] setting file for paths, training parameter and so on (improve usability)
 - [ ] add inference mode rgb and flow mode (currently only mixed mode is available)
