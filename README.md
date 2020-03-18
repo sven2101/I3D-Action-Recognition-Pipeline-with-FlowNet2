@@ -5,7 +5,7 @@ This repository contains a Dockerfile to run neural networks for optical flow es
 
 ### Run a video or live stream from your camera or file system to get the current action class
 
-<img src="data/archery.gif" width="33%"></img> <img src="data/boxing.gif" width="33%"></img> <img src="data/juggling.gif" width="33%"></img> 
+<img src="data/archery.gif" width="32%"></img> <img src="data/boxing.gif" width="32%"></img> <img src="data/juggling.gif" width="32%"></img> 
 
 ## 0. Requirements
 
