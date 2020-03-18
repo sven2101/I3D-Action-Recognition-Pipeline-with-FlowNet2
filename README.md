@@ -234,7 +234,7 @@ Some explanations of the readme come from the original [FlowNet2 Repository](htt
 - [x] add live prediction to preview window 
 - [x] improve console output for predictions
 - [x] improve thread waiting solution for live inference when threads are done
-- [ ] add inference mode rgb and flow mode (currently only mixed mode is available)
+- [x] add inference mode rgb and flow mode (currently only mixed mode is available)
 - [ ] setting file for paths, training parameter and so on (improve usability)
 - [ ] improve performance of live inference
 - [ ] improve training process with validation set and kfold validation
