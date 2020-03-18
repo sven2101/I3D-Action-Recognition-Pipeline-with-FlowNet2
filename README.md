@@ -3,6 +3,9 @@
 
 This repository contains a Dockerfile to run neural networks for optical flow estimation in Docker containers and the I3D Finetune architecture for action recognition. It contains scripts for training, testing and live inference. 
 
+###Example of video inference:
+<img src="data/archery.gif" width="33%"></img> <img src="data/boxing.gif" width="33%"></img> <img src="data/juggling.gif" width="33%"></img> 
+
 ## 0. Requirements
 
 We use [nvidia-docker](https://github.com/NVIDIA/nvidia-docker#quick-start) for reliable GPU support in the containers. This is an extension to Docker and can be easily installed with just two commands.
