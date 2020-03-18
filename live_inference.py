@@ -8,6 +8,7 @@ import argparse
 import time
 import logging
 import cv2
+import copy
 #use if flownet saves not as .npy
 #import flowiz as fz
 import glob
@@ -23,7 +24,16 @@ _MIX_WEIGHT_OF_RGB = 0.5
 _MIX_WEIGHT_OF_FLOW = 0.5
 _LOG_ROOT = 'output'
 
+#Run Video Examples
+#video_path = './data/example/_Archery_g01_c01.avi'
+#video_path = './data/example/_BoxingPunchingBag_g01_c01.avi' 
+#video_path = './data/example/_JugglingBalls_g01_c02.avi' 
+
+#Run camera 
+video_path = 0
+
 DATA_DIR = 'data/live'
+prediction_print=['none',0,0]
 
 # NOTE: Before running, change the path of checkpoints
 _CHECKPOINT_PATHS = {
@@ -60,7 +70,7 @@ def main(dataset, mode, variant, workers, inference):
     label_map = get_label_map(os.path.join(
         './data', dataset, 'label_map.txt'))
     
-    fc_out,rgb_fc_out,flow_fc_out,rgb_saver,flow_saver,rgb_holder,flow_holder = build_model(mode,dataset)
+    prob_predictions, fc_out,rgb_fc_out,flow_fc_out,rgb_saver,flow_saver,rgb_holder,flow_holder = build_model(mode,dataset)
     
     # GPU config 
     # Important for using flownet and i3d at the same time
@@ -85,25 +95,30 @@ def main(dataset, mode, variant, workers, inference):
     if not os.path.exists(DATA_DIR+'/flow'):
         os.system("mkdir "+DATA_DIR+'/flow')
 
-    #stream will stop after pressing q in the live-preview window
-    read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference, workers)
+    read_stream(variant,prob_predictions,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference, workers)
 
+    print('Infer Input in: '+str(time.time() - start_time), end="\r\n")
     sess.close()
 
-def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference_frames, workers):
+def read_stream(variant, prob_predictions, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess, inference_frames, workers):
     pooling_executor = ThreadPoolExecutor(max_workers=workers)
-    cv2.namedWindow("Live")
-    vidcap = cv2.VideoCapture(0)
+    future_threads = []
+    cv2.namedWindow("Preview")
+    vidcap = cv2.VideoCapture(video_path)
+    vidcap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+    vidcap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
     success,frame = vidcap.read()
     flow_paths = []
     img_paths = []
     img_frames = []
     count = 0
     while success: 
-        if frame is not None:   
-            cv2.imshow("Live", frame)
+        frame2=copy.deepcopy(frame)
+        cv2.putText(frame2, prediction_print[0] +" "+str(prediction_print[2]), (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255),2)
+        cv2.imshow("Preview", frame2)
+        # without it will break cv2.imshow - dont know why!
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            break   
+            break
         img_path = DATA_DIR+"/img/frame{:06d}.jpg".format(count)
         cv2.imwrite(img_path,frame)
         img_frames.append(transform_data(frame))
@@ -113,7 +128,7 @@ def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, 
         flow_paths.append(flow_path)
         if count != 0 and count%inference_frames == 0:
             print('Calculate Flows for Part '+str(int(imagelist_number))+'...', end="\r\n")
-            pooling_executor.submit(generate_flow_and_predict,variant,DATA_DIR,flow_paths,img_paths,img_frames,str(imagelist_number), fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess)
+            future_threads.append(pooling_executor.submit(generate_flow_and_predict,variant,DATA_DIR,flow_paths,img_paths,img_frames,str(imagelist_number),prob_predictions, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess))
             print('Added data of Part '+str(int(imagelist_number))+' in pipeline...', end="\r\n")
             img_frames = []
             img_paths = []
@@ -121,18 +136,21 @@ def read_stream(variant,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, 
             img_paths.append(img_path)
             flow_paths.append(flow_path)
         # use two times to reduce fps
-        success,frame = vidcap.read() 
         #success,frame = vidcap.read() 
+        success,frame = vidcap.read() 
         count = count + 1
     vidcap.release()
-    
-def generate_flow_and_predict(variant,DATA_DIR,flow_paths,img_paths,img_frames,imagelist_number,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
+    print('Waiting until all threads finished...', end="\r\n")
+    wait(future_threads)
+    print('All threads finished!', end="\r\n")
+
+def generate_flow_and_predict(variant,DATA_DIR,flow_paths,img_paths,img_frames,imagelist_number,prob_predictions,fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
     write_flownet_io_files(DATA_DIR,flow_paths,img_paths,imagelist_number)
     flow_frames = generate_flows(DATA_DIR,variant,imagelist_number)
-    predict_action(img_frames, flow_frames,imagelist_number, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess)
+    predict_action(img_frames, flow_frames,imagelist_number,prob_predictions, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess)
     clean_directory(DATA_DIR,imagelist_number,img_paths)
     
-def predict_action(img_frames, flow_frames, imagelist_number, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
+def predict_action(img_frames, flow_frames, imagelist_number,prob_predictions, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder, label_map, sess):
     rgb_clip = np.array(img_frames)  
     rgb_clip = rgb_clip/255 
     input_rgb = rgb_clip[np.newaxis, :, :, :, :]
@@ -141,15 +159,23 @@ def predict_action(img_frames, flow_frames, imagelist_number, fc_out, rgb_fc_out
     flow_clip = 2*(flow_clip/255)-1
     input_flow = flow_clip[np.newaxis, :, :, :, :]
       
-    predictions, curr_rgb_fc_data, curr_flow_fc_data = sess.run(
-        [fc_out, rgb_fc_out, flow_fc_out],
+    out_prob_predictions ,logit_predictions, curr_rgb_fc_data, curr_flow_fc_data = sess.run(
+        [prob_predictions,fc_out, rgb_fc_out, flow_fc_out],
         feed_dict={rgb_holder: input_rgb, flow_holder: input_flow,})
         
     # np.argmax(predictions[0]),predictions[0, np.argmax(predictions, axis=1)[0]]
-    print('Predict Part '+imagelist_number+ ' with Class ' + trans_label(np.argmax(predictions[0]), label_map), end="\r\n")
+    print('Predict Part '+imagelist_number+ ' with Class ' + trans_label(np.argmax(out_prob_predictions[0]), label_map) + ' with probability ' + str(max(out_prob_predictions[0])), end="\r\n")
+    update_predictions_inframe(imagelist_number,trans_label(np.argmax(out_prob_predictions[0]), label_map),max(out_prob_predictions[0]))
+
+def update_predictions_inframe(imagelist_number,prediction,confidence):
+    global prediction_print
+    if imagelist_number > prediction_print[1]:
+        prediction_print[0] = prediction
+        prediction_print[1] = imagelist_number
+        prediction_print[2] = confidence
 
 def build_model(mode,dataset):
-    if mode in ['rgb', 'mixed']:
+    if mode in ['rgb', 'mixed']: 
         rgb_holder = tf.placeholder(
             tf.float32, [None, None, _FRAME_SIZE, _FRAME_SIZE, _CHANNEL['rgb']])
     if mode in ['flow', 'mixed']:
@@ -196,15 +222,15 @@ def build_model(mode,dataset):
     # Edited Version by AlexHu
     if mode == 'rgb':
         fc_out = rgb_fc_out
-        softmax = tf.nn.softmax(fc_out)
+        prob_predictions = tf.nn.softmax(fc_out)
     if mode == 'flow':
         fc_out = flow_fc_out
-        softmax = tf.nn.softmax(fc_out)
+        prob_predictions = tf.nn.softmax(fc_out)
     if mode == 'mixed':
         fc_out = _MIX_WEIGHT_OF_RGB * rgb_fc_out + _MIX_WEIGHT_OF_FLOW * flow_fc_out
-        softmax = tf.nn.softmax(fc_out)
+        prob_predictions = tf.nn.softmax(fc_out)
         
-    return fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder
+    return prob_predictions, fc_out, rgb_fc_out, flow_fc_out, rgb_saver, flow_saver, rgb_holder, flow_holder
 
 def transform_data(data,scale_size=256,crop_size=224,mode='rgb'):
     width = data.shape[0]

@@ -144,11 +144,15 @@ You can quit the live stream and stop the script by pressing the key 'q' in the 
 **Note: Make sure it's using GPU and not CPU. If it's very slow it's probably on CPU and you should fix your cuda environment. Look at Section 6.**
 
 ## 5.1 Videofile Inference instead of live stream
-`videofile_inference.py` contains an example for processing a videofile (.avi, .mp4, ...) instead of a live stream. It's similar to `live_inference.py`.
+Change these lines in `live_inference.py` for processing a videofile (.avi, .mp4, ...) instead of a live stream:
 
-> $ sh start_videofile_inference.sh
-
-It uses the example videofile /data/example/_ApplyEyeMakeup_g01_c01.avi.
+> #Run video examples<br>
+> #video_path = './data/example/_Archery_g01_c01.avi'<br>
+> #video_path = './data/example/_BoxingPunchingBag_g01_c01.avi' <br>
+> #video_path = './data/example/_JugglingBalls_g01_c02.avi' <br>
+>
+> #Run camera <br>
+> video_path = 0<br>
 
 ## 6. Troubleshooting
 
@@ -227,12 +231,12 @@ Some explanations of the readme come from the original [FlowNet2 Repository](htt
 
 - [x] add real live inference script
 - [x] add images of different flownet2 modes (qualitative comparison)
-- [ ] add class for common code of live and videofile processing
-- [ ] add live prediction to preview window 
+- [x] add live prediction to preview window 
 - [x] improve console output for predictions
-- [x] improve thread waiting solution for videofile inference when threads are done
-- [ ] setting file for paths, training parameter and so on (improve usability)
+- [x] improve thread waiting solution for live inference when threads are done
 - [ ] add inference mode rgb and flow mode (currently only mixed mode is available)
+- [ ] setting file for paths, training parameter and so on (improve usability)
+- [ ] improve performance of live inference
 - [ ] improve training process with validation set and kfold validation
 - [ ] python3 compatibility
 
