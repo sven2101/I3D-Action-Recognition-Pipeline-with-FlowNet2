@@ -17,7 +17,7 @@ Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.0
 Markdown==3.1.1
 mock==3.0.5
-numpy==1.16.6
+numpy==1.22.0
 opencv-python==4.2.0.32
 opt-einsum==2.3.2
 pandas==0.24.2
